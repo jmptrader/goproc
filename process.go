@@ -10,22 +10,22 @@ import (
 )
 
 type Process struct {
-	Command      string
-	Cwd          string
-	KeepAlive    bool
-	Event        string
-	LogFile      string
-	ErrFile      string
-	Pid          int
-	Status       string
 	Args         []string
-	Name         string
-	Process      *os.Process
-	Respawns     int
-	RespawnLimit int
+	Command      string
 	Cron         string
+	Cwd          string
+	ErrFile      string
+	Event        string
+	KeepAlive    bool
+	LogFile      string
 	monitor      chan<- string
+	Name         string
+	Pid          int
+	Process      *os.Process
+	RespawnLimit int
+	Respawns     int
 	StartTime    time.Time
+	Status       string
 }
 
 func NewLog(path string) *os.File {
