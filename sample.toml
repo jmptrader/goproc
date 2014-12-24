@@ -1,0 +1,23 @@
+[[cron]]
+name = "CronProcess"
+cron = "*"
+cwd = "/path/to/process"
+command = "php"
+args = ["process.php"]
+
+[[boot]]
+name = "HTTP Server"
+cwd = "/path/to/process"
+command = "node"
+args = ["server.js"]
+keepAlive = true
+
+[[event]]
+name = "HTTP Server"
+cwd = "/path/to/process"
+command = "node"
+args = ["server.js"]
+keepAlive = true
+
+
+
