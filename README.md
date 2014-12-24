@@ -20,6 +20,19 @@ manager.Start()
 myProc := manager.Processes["MyProcName"]
 ```
 
+### Trigger an Event
+```go
+manager.TriggerEvent(&Event{
+	Name:"My Event",
+	Data:&map[string]interface{
+		"foo":"bar",
+	},
+})
+```
+
+Data does nothing now but will eventually be accessible via special entries in the process args array, like ":data.foo" or whatever. Coming soon.
+
+
 # Process Configuration
 ```go
 type Process struct {
