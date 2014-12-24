@@ -7,11 +7,11 @@ Configure processes to run on a cron, at boot time, or responding to an event.
 ```go
 
 // Parse config from a toml file (see sample.toml)
-config, err := ParseFile("/path/to/file.toml")
+config, err := gpm.ParseFile("/path/to/file.toml")
 if err != nil {
 	panic(err)
 }
-manager := NewManager(config)
+manager := gpm.NewManager(config)
 
 // Start the processes
 manager.Start()
@@ -22,7 +22,7 @@ myProc := manager.Processes["MyProcName"]
 
 ### Trigger an Event
 ```go
-manager.TriggerEvent(&Event{
+manager.TriggerEvent(&gpm.Event{
 	Name:"My Event",
 	Data:&map[string]interface{
 		"foo":"bar",
