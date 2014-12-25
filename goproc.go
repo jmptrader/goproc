@@ -1,4 +1,4 @@
-package gpm
+package goproc
 
 import (
 	"github.com/BurntSushi/toml"

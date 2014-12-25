@@ -5,16 +5,16 @@ Configure processes to run on a cron, at boot time, or responding to an event. T
 ```go
 
 // Parse config from a toml file (see sample.toml)
-config, err := gpm.ParseFile("/path/to/file.toml")
+config, err := goproc.ParseFile("/path/to/file.toml")
 if err != nil {
 	panic(err)
 }
 
-// Or create an instance of gpm.Config from scratch (see below)
-config := &gpm.Config{}
+// Or create an instance of goproc.Config from scratch (see below)
+config := &goproc.Config{}
 
 
-manager := gpm.NewManager(config)
+manager := goproc.NewManager(config)
 
 // Start the processes. Note that this needs to be run in a go routine since the manager listens for finished processes to manage its queue.
 go manager.Start()
@@ -46,7 +46,7 @@ type Config struct {
 
 ### Trigger an Event
 ```go
-manager.TriggerEvent(&gpm.Event{
+manager.TriggerEvent(&goproc.Event{
 	Name:"My Event",
 	Data:&map[string]interface{
 		"foo":"bar",

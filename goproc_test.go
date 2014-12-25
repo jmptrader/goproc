@@ -1,4 +1,4 @@
-package gpm
+package goproc
 
 import (
 	. "gopkg.in/check.v1"

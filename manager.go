@@ -1,4 +1,4 @@
-package gpm
+package goproc
 
 import (
 	// "encoding/json"
