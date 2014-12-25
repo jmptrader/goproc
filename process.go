@@ -10,22 +10,14 @@ import (
 )
 
 type Process struct {
-	Args         []string
-	Command      string
-	Cron         string
-	Cwd          string
-	ErrFile      string
-	Event        string
-	KeepAlive    bool
-	LogFile      string
-	monitor      chan<- string
-	Name         string
-	Pid          int
-	Process      *os.Process
-	RespawnLimit int
-	Respawns     int
-	StartTime    time.Time
-	Status       string
+	Template  *ProcessTemplate
+	x         *os.Process
+	Args      []string
+	Pid       int
+	Status    string
+	monitor   chan<- string
+	StartTime time.Time
+	Respawns  int
 }
 
 func NewLog(path string) *os.File {
@@ -40,28 +32,28 @@ func NewLog(path string) *os.File {
 	return file
 }
 func (p *Process) release(status string) {
-	if p.Process != nil {
-		p.Process.Release()
+	if p.x != nil {
+		p.x.Release()
 	}
 	p.Pid = 0
 	// p.Pidfile.delete()
 	p.Status = status
 
 	if status != "restarting" {
-		p.monitor <- p.Name
+		p.monitor <- p.Template.Name
 	}
 
 }
 
 func (p *Process) Watch() {
-	if p.Process == nil {
+	if p.x == nil {
 		p.release("stopped")
 		return
 	}
 	status := make(chan *os.ProcessState)
 	died := make(chan error)
 	go func() {
-		state, err := p.Process.Wait()
+		state, err := p.x.Wait()
 		if err != nil {
 			died <- err
 			return
@@ -74,12 +66,13 @@ func (p *Process) Watch() {
 			return
 		}
 
-		if p.KeepAlive {
+		if p.Template.KeepAlive {
 
-			if p.Respawns == p.RespawnLimit {
+			if p.Respawns == p.Template.RespawnLimit {
 				p.release("exited")
-				log.Printf("%s respawn limit reached.\n", p.Name)
+				log.Printf("%s respawn limit reached.\n", p.Template.Name)
 			} else {
+				log.Println("Keeping alive")
 				p.Respawns++
 				p.restart()
 				p.Status = "restarted"
@@ -91,27 +84,30 @@ func (p *Process) Watch() {
 
 	case err := <-died:
 		p.release("killed")
-		log.Printf("%d %s killed = %#v", p.Process.Pid, p.Name, err)
+		log.Printf("%d %s killed = %#v", p.x.Pid, p.Template.Name, err)
 	}
 }
 
 func (p *Process) Start() bool {
 	p.StartTime = time.Now()
-
+	log.Println("Starting...")
 	// wd, _ := os.Getwd()
 	proc := &os.ProcAttr{
-		Dir: p.Cwd,
+		Dir: p.Template.Cwd,
 		Env: os.Environ(),
 		Files: []*os.File{
 			os.Stdin,
-			NewLog(p.LogFile),
-			NewLog(p.ErrFile),
+			// os.Stdout,
+			// os.Stderr,
+			NewLog(p.Template.LogFile),
+			NewLog(p.Template.ErrFile),
 		},
 	}
-	args := append([]string{p.Name}, p.Args...)
-	process, err := os.StartProcess(p.Command, args, proc)
+	// args := p.Args
+	process, err := os.StartProcess("/bin/cat", []string{"sample.toml"}, proc)
+	// process, err := os.StartProcess(p.Template.Command, p.Args, proc)
 	if err != nil {
-		log.Fatalf("%s failed. %s\n", p.Name, err)
+		log.Fatalf("%s failed. %s\n", p.Template.Name, err)
 		return false
 	}
 	// err = p.Pidfile.write(process.Pid)
@@ -120,7 +116,8 @@ func (p *Process) Start() bool {
 	// 	return ""
 	// }
 
-	p.Process = process
+	p.x = process
+	fmt.Println("PID:", process.Pid)
 	p.Pid = process.Pid
 	p.Status = "started"
 	return true
@@ -133,9 +130,9 @@ func (p *Process) restart() {
 }
 
 func (p *Process) _stop() {
-	if p.Process != nil {
+	if p.x != nil {
 		// p.x.Kill() this seems to cause trouble
-		cmd := exec.Command("kill", fmt.Sprintf("%d", p.Process.Pid))
+		cmd := exec.Command("kill", fmt.Sprintf("%d", p.x.Pid))
 		_, err := cmd.CombinedOutput()
 		if err != nil {
 			log.Println(err)
@@ -158,6 +155,6 @@ func (p *Process) Spawn() {
 func (p *Process) stop() string {
 	p._stop()
 	p.release("stopped")
-	message := fmt.Sprintf("%s stopped.\n", p.Name)
+	message := fmt.Sprintf("%s stopped.\n", p.Template.Name)
 	return message
 }

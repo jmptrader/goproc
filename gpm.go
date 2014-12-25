@@ -7,14 +7,14 @@ import (
 )
 
 type Config struct {
-	Cron  []*Process
-	Event []*Process
-	Boot  []*Process
+	Cron  []*ProcessTemplate
+	Event []*ProcessTemplate
+	Boot  []*ProcessTemplate
 }
 
 type Event struct {
 	Name string
-	Data map[string]interface{}
+	Data *map[string]interface{}
 }
 
 type Status struct {

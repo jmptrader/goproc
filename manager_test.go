@@ -7,7 +7,7 @@ import (
 )
 
 func (s *TestSuite) TestSpawn(c *C) {
-	proc := &Process{
+	temp := &ProcessTemplate{
 		Command:      "/usr/local/bin/node",
 		Args:         []string{"samples/longrunning.js"},
 		LogFile:      "/tmp/cronlog",
@@ -19,15 +19,15 @@ func (s *TestSuite) TestSpawn(c *C) {
 
 	manager := NewManager(&Config{})
 	// manager.monitor = make(chan string)
-	manager.Spawn(proc)
+	manager.Spawn(temp)
 
-	c.Assert(manager.Processes["test"], Equals, proc)
+	c.Assert(manager.Processes["test"], Equals, temp)
 	// manager.Status()
 }
 
 // Make sure that a cron runs and the monitor channel receives the "finish" message
 func (s *TestSuite) TestRegisterCrons(c *C) {
-	proc1 := &Process{
+	temp1 := &ProcessTemplate{
 		Command: "/usr/local/bin/node",
 		Args: []string{
 			"samples/longrunning.js",
@@ -37,8 +37,8 @@ func (s *TestSuite) TestRegisterCrons(c *C) {
 	}
 
 	config := &Config{
-		Cron: []*Process{
-			proc1,
+		Cron: []*ProcessTemplate{
+			temp1,
 		},
 	}
 

@@ -11,7 +11,7 @@ type Manager struct {
 	cron      *cron.Cron
 	monitor   chan string
 	event     chan *Event
-	Processes map[string]*Process
+	Processes map[string]*ProcessTemplate
 }
 
 func (m *Manager) Status() {
@@ -19,8 +19,11 @@ func (m *Manager) Status() {
 	fmt.Println(string(marshaled))
 }
 
-func (m *Manager) Spawn(p *Process) error {
-	m.Processes[p.Name] = p
+func (m *Manager) Spawn(t *ProcessTemplate) error {
+	// Create a new process from template
+	p := t.NewProcess()
+
+	m.Processes[t.Name] = t
 	p.monitor = m.monitor
 	p.Spawn()
 	return nil
@@ -29,7 +32,7 @@ func (m *Manager) Spawn(p *Process) error {
 func NewManager(config *Config) *Manager {
 	manager := &Manager{}
 	manager.monitor = make(chan string)
-	manager.Processes = make(map[string]*Process)
+	manager.Processes = make(map[string]*ProcessTemplate)
 	manager.event = make(chan *Event)
 	manager.Config = config
 	return manager
