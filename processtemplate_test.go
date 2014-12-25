@@ -50,7 +50,14 @@ func (s *TestSuite) TestNewProcessWithEventFlags(c *C) {
 	}
 
 	proc := template.NewProcessWithEvent(event)
-	c.Assert(proc.Args[1], Equals, "--foo \"bar\"")
-	c.Assert(proc.Args[2], Equals, "--baz \"bing\"")
+
+	// This switches sometimes, so we allow for both orders
+	if proc.Args[1] == "--foo \"bar\"" {
+		c.Assert(proc.Args[2], Equals, "--baz \"bing\"")
+	} else {
+		c.Assert(proc.Args[1], Equals, "--baz \"bing\"")
+		c.Assert(proc.Args[2], Equals, "--foo \"bar\"")
+
+	}
 
 }

@@ -18,7 +18,6 @@ type ProcessTemplate struct {
 	LogFile      string
 	Name         string
 	RespawnLimit int
-	Running      []*Process
 }
 
 func (t *ProcessTemplate) NewProcess() *Process {

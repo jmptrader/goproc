@@ -15,9 +15,11 @@ type Process struct {
 	Args      []string
 	Pid       int
 	Status    string
-	monitor   chan<- string
+	monitor   chan<- *Process
 	StartTime time.Time
 	Respawns  int
+	Info      *os.ProcessState
+	Error     error
 }
 
 func NewLog(path string) *os.File {
@@ -40,7 +42,7 @@ func (p *Process) release(status string) {
 	p.Status = status
 
 	if status != "restarting" {
-		p.monitor <- p.Template.Name
+		p.monitor <- p
 	}
 
 }
@@ -61,18 +63,18 @@ func (p *Process) Watch() {
 		status <- state
 	}()
 	select {
-	case _ = <-status:
+	case state := <-status:
 		if p.Status == "stopped" {
 			return
 		}
+		p.Info = state
 
 		if p.Template.KeepAlive {
 
 			if p.Respawns == p.Template.RespawnLimit {
-				p.release("exited")
+				p.stop()
 				log.Printf("%s respawn limit reached.\n", p.Template.Name)
 			} else {
-				log.Println("Keeping alive")
 				p.Respawns++
 				p.restart()
 				p.Status = "restarted"
@@ -83,6 +85,7 @@ func (p *Process) Watch() {
 		}
 
 	case err := <-died:
+		p.Error = err
 		p.release("killed")
 		log.Printf("%d %s killed = %#v", p.x.Pid, p.Template.Name, err)
 	}
@@ -90,7 +93,6 @@ func (p *Process) Watch() {
 
 func (p *Process) Start() bool {
 	p.StartTime = time.Now()
-	log.Println("Starting...")
 	// wd, _ := os.Getwd()
 	proc := &os.ProcAttr{
 		Dir: p.Template.Cwd,
@@ -103,9 +105,9 @@ func (p *Process) Start() bool {
 			NewLog(p.Template.ErrFile),
 		},
 	}
-	// args := p.Args
-	process, err := os.StartProcess("/bin/cat", []string{"sample.toml"}, proc)
-	// process, err := os.StartProcess(p.Template.Command, p.Args, proc)
+	args := append([]string{p.Template.Name}, p.Args...)
+	// process, err := os.StartProcess("/bin/cat", []string{"sample.toml"}, proc)
+	process, err := os.StartProcess(p.Template.Command, args, proc)
 	if err != nil {
 		log.Fatalf("%s failed. %s\n", p.Template.Name, err)
 		return false
@@ -117,7 +119,6 @@ func (p *Process) Start() bool {
 	// }
 
 	p.x = process
-	fmt.Println("PID:", process.Pid)
 	p.Pid = process.Pid
 	p.Status = "started"
 	return true
@@ -139,6 +140,7 @@ func (p *Process) _stop() {
 		}
 		// p.children.stop("all")
 	}
+
 }
 
 func (p *Process) Spawn() {

@@ -1,3 +1,6 @@
+maxConcurrent = 5
+
+# Processes
 [[cron]]
 name = "CronProcess"
 cron = "*"

@@ -1,5 +1,4 @@
 console.log('Starting longrunning process...');
-
 var i = 0;
 
 setInterval(function() {
@@ -9,4 +8,4 @@ setInterval(function() {
 	}
 	console.log(i);
 	i++;
-}, 1000);
+}, 100);

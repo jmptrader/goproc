@@ -21,7 +21,40 @@ func (s *TestSuite) TestSpawn(c *C) {
 	// manager.monitor = make(chan string)
 	manager.Spawn(temp)
 
-	c.Assert(manager.Processes["test"], Equals, temp)
+	c.Assert(len(manager.Running), Equals, 1)
+	// manager.Status()
+}
+
+func (s *TestSuite) TestSpawnWithLimit(c *C) {
+	temp := &ProcessTemplate{
+		Command:      "/usr/local/bin/node",
+		Args:         []string{"samples/longrunning.js"},
+		LogFile:      "/tmp/cronlog",
+		ErrFile:      "/tmp/cronlog",
+		KeepAlive:    true,
+		RespawnLimit: 5,
+		Name:         "test",
+	}
+
+	manager := NewManager(&Config{
+		MaxConcurrent: 1,
+	})
+	// manager.monitor = make(chan string)
+	manager.Spawn(temp)
+	manager.Spawn(temp)
+
+	c.Assert(len(manager.Running), Equals, 1)
+	c.Assert(len(manager.Queue), Equals, 1)
+
+	go manager.Start()
+
+	// Trigger "done"
+	manager.monitor <- manager.Running[0]
+
+	// Needs to be more than the wait time in manager.Start()
+	time.Sleep(200 * time.Millisecond)
+	c.Assert(len(manager.Running), Equals, 1)
+	c.Assert(len(manager.Queue), Equals, 0)
 	// manager.Status()
 }
 
@@ -44,16 +77,16 @@ func (s *TestSuite) TestRegisterCrons(c *C) {
 
 	manager := NewManager(config)
 
-	manager.Start()
+	go manager.Start()
 
 	// Make the crons are registered
-	c.Assert(len(manager.cron.Entries()), Equals, 1)
+	// c.Assert(len(manager.cron.Entries()), Equals, 1)
 
 	for {
 		select {
 		case proc := <-manager.monitor:
 			// fmt.Println("Got ", proc)
-			c.Assert(proc, Equals, "asdf")
+			c.Assert(proc.Template, Equals, temp1)
 			return
 		default:
 			// Wait a while before we check again

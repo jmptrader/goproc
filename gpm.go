@@ -7,9 +7,15 @@ import (
 )
 
 type Config struct {
-	Cron  []*ProcessTemplate
-	Event []*ProcessTemplate
-	Boot  []*ProcessTemplate
+	Cron          []*ProcessTemplate
+	Event         []*ProcessTemplate
+	Boot          []*ProcessTemplate
+	MaxConcurrent int
+}
+
+type MonitorMessage struct {
+	Process  *Process
+	ExitCode int
 }
 
 type Event struct {
