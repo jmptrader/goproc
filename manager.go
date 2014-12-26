@@ -4,6 +4,7 @@ import (
 	// "encoding/json"
 	// "fmt"
 	"github.com/robfig/cron"
+	"log"
 	"time"
 )
 
@@ -39,9 +40,10 @@ func (m *Manager) TriggerEvent(event *Event) {
 
 func (m *Manager) spawn(p *Process) {
 	p.monitor = m.monitor
-
-	// Are we at the limit?
+	// // Are we at the limit?
 	if m.Config.MaxConcurrent > 0 && len(m.Running) >= m.Config.MaxConcurrent {
+		p.QueuedAt = time.Now()
+		log.Println("Queuing process ", p.Template.Name, p.QueuedAt)
 		m.Queue = append(m.Queue, p)
 	} else {
 		m.Running = append(m.Running, p)
@@ -60,6 +62,7 @@ func NewManager(config *Config) *Manager {
 }
 
 func (m *Manager) Start() {
+	log.Println("Starting process manager")
 	// Boot all processes that are set to boot
 	for _, t := range m.Config.Boot {
 		m.Spawn(t)
@@ -78,6 +81,7 @@ func (m *Manager) Start() {
 	for {
 		select {
 		case proc := <-m.monitor:
+			log.Println("Got proc from monitor channel", proc.Template.Name)
 			// Remove proc from running
 			for i, p := range m.Running {
 				if proc == p {

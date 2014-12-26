@@ -15,11 +15,12 @@ type Process struct {
 	Args      []string
 	Pid       int
 	Status    string
-	monitor   chan<- *Process
+	monitor   chan *Process
 	StartTime time.Time
 	Respawns  int
 	Info      *os.ProcessState
 	Error     error
+	QueuedAt  time.Time
 }
 
 func NewLog(path string) *os.File {
@@ -34,6 +35,7 @@ func NewLog(path string) *os.File {
 	return file
 }
 func (p *Process) release(status string) {
+	log.Printf("Releasing process %d (%s) with status %s\n", p.Pid, p.Template.Name, status)
 	if p.x != nil {
 		p.x.Release()
 	}
@@ -42,7 +44,10 @@ func (p *Process) release(status string) {
 	p.Status = status
 
 	if status != "restarting" {
-		p.monitor <- p
+
+		go func() {
+			p.monitor <- p
+		}()
 	}
 
 }
@@ -71,14 +76,15 @@ func (p *Process) Watch() {
 
 		if p.Template.KeepAlive {
 
-			if p.Respawns == p.Template.RespawnLimit {
-				p.stop()
+			if p.Template.RespawnLimit > 0 && p.Respawns == p.Template.RespawnLimit {
+				p.Stop()
 				log.Printf("%s respawn limit reached.\n", p.Template.Name)
 			} else {
 				p.Respawns++
-				p.restart()
+				p.Restart()
 				p.Status = "restarted"
 			}
+
 			return
 		} else {
 			p.release("finished")
@@ -124,7 +130,7 @@ func (p *Process) Start() bool {
 	return true
 }
 
-func (p *Process) restart() {
+func (p *Process) Restart() {
 	p._stop()
 	p.release("restarting")
 	p.Spawn()
@@ -154,7 +160,7 @@ func (p *Process) Spawn() {
 	}()
 }
 
-func (p *Process) stop() string {
+func (p *Process) Stop() string {
 	p._stop()
 	p.release("stopped")
 	message := fmt.Sprintf("%s stopped.\n", p.Template.Name)

@@ -19,9 +19,21 @@ func (s *TestSuite) TestSpawn(c *C) {
 
 	manager := NewManager(&Config{})
 	// manager.monitor = make(chan string)
-	manager.Spawn(temp)
+	go manager.Spawn(temp)
 
-	c.Assert(len(manager.Running), Equals, 1)
+	for {
+		select {
+		case proc := <-manager.monitor:
+			// fmt.Println("Got ", proc)
+			c.Assert(proc.Template, Equals, temp)
+			return
+		default:
+			// Wait a while before we check again
+			time.Sleep(100 * time.Millisecond)
+		}
+	}
+
+	// c.Assert(len(manager.Running), Equals, 1)
 	// manager.Status()
 }
 
@@ -77,10 +89,10 @@ func (s *TestSuite) TestRegisterCrons(c *C) {
 
 	manager := NewManager(config)
 
+	// log.Println(manager.monitor)
 	go manager.Start()
 
 	// Make the crons are registered
-	// c.Assert(len(manager.cron.Entries()), Equals, 1)
 
 	for {
 		select {
