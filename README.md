@@ -69,7 +69,7 @@ type ProcessTemplate struct {
 	Args         []string
 
 	// Whether to start this process as soon as the process manager starts
-	AuthStart    bool
+	AutoStart    bool
 
 	// Executable to run (e.g. "/usr/bin/php")
 	Command      string
