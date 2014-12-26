@@ -16,7 +16,7 @@ func (s *TestSuite) TestNewProcessWithEventJson(c *C) {
 		RespawnLimit: 5,
 	}
 
-	event := &Event{
+	trig := &Trigger{
 		Name: "Foo",
 		Data: &map[string]interface{}{
 			"foo":  "bar",
@@ -25,7 +25,7 @@ func (s *TestSuite) TestNewProcessWithEventJson(c *C) {
 		},
 	}
 
-	proc := template.NewProcessWithEvent(event)
+	proc := template.NewProcessWithTrigger(trig)
 
 	c.Assert(proc.Args[1], Equals, "{\"baz\":1,\"bing\":true,\"foo\":\"bar\"}")
 
@@ -41,7 +41,7 @@ func (s *TestSuite) TestNewProcessWithEventFlags(c *C) {
 		RespawnLimit: 5,
 	}
 
-	event := &Event{
+	trig := &Trigger{
 		Name: "Foo",
 		Data: &map[string]interface{}{
 			"foo": "bar",
@@ -49,7 +49,7 @@ func (s *TestSuite) TestNewProcessWithEventFlags(c *C) {
 		},
 	}
 
-	proc := template.NewProcessWithEvent(event)
+	proc := template.NewProcessWithTrigger(trig)
 
 	// This switches sometimes, so we allow for both orders
 	if proc.Args[1] == "--foo \"bar\"" {

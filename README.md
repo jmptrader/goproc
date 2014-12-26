@@ -1,5 +1,5 @@
 # What does it do?
-Configure processes to run on a cron, at boot time, or responding to an event. This is not a standalone executable - rather, you can use it within the context of your own application or build your own interaction layer.
+Configure processes to run on a cron, at boot time, or triggered manually. This is not a standalone executable - rather, you can use it within the context of your own application or build your own interaction layer.
 
 # How to use
 ```go
@@ -31,18 +31,18 @@ type Config struct {
 	Process          []*ProcessTemplate
 
 	// Most concurrent processes to run at one time. 
-	// If this limit is reached, `manager.Spawn()` and `manager.TriggerEvent()` 
+	// If this limit is reached, `manager.Spawn()` and `manager.Trigger()` 
 	// will place processes in the manager's `Queue`, which gets emptied 
 	// as processes finish executing.
 	MaxConcurrent int
 }
 ```
 
-### Trigger an Event
+### Manually Trigger a Process
 Manually trigger a process specifying name and data:
 
 ```go
-manager.TriggerProcess(&goproc.Event{
+manager.Trigger(&goproc.Trigger{
 	Name:"My Process",
 	Data:&map[string]interface{
 		"foo":"bar",
@@ -50,8 +50,8 @@ manager.TriggerProcess(&goproc.Event{
 })
 ```
 
-### Special Event Arguments
-You can pass event data to your process as one argument in JSON format, or as a list of key-value pairs using flags. For example, `Args:[]string{"firstArg, ":json", ":flags"}`, with the above event, would call the process named "My Process" with the following arguments:
+### Special Manual Process Arguments
+You can pass custom data to your process as one argument in JSON format, or as a list of key-value pairs using flags. For example, `Args:[]string{"firstArg, ":json", ":flags"}`, with the above trigger, would call the process named "My Process" with the following arguments:
 
 ```go
 ["firstArg", "{\"foo\":\"bar\"}", "--foo \"bar\""]

@@ -16,7 +16,7 @@ type MonitorMessage struct {
 	ExitCode int
 }
 
-type Event struct {
+type Trigger struct {
 	Name string
 	Data *map[string]interface{}
 }

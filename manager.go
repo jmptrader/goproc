@@ -2,7 +2,6 @@ package goproc
 
 import (
 	// "encoding/json"
-	"fmt"
 	"github.com/robfig/cron"
 	"log"
 	"time"
@@ -12,7 +11,6 @@ type Manager struct {
 	Config  *Config
 	cron    *cron.Cron
 	monitor chan *Process
-	event   chan *Event
 	Queue   []*Process
 	Running []*Process
 }
@@ -28,11 +26,11 @@ func (m *Manager) Spawn(t *ProcessTemplate) {
 	m.spawn(p)
 }
 
-func (m *Manager) TriggerProcess(event *Event) {
+func (m *Manager) Trigger(trig *Trigger) {
 	// Loop through all event processes to see which ones respond
 	for _, t := range m.Config.Process {
-		if t.Name == event.Name {
-			p := t.NewProcessWithEvent(event)
+		if t.Name == trig.Name {
+			p := t.NewProcessWithTrigger(trig)
 			m.spawn(p)
 		}
 	}
@@ -56,7 +54,6 @@ func NewManager(config *Config) *Manager {
 	manager.monitor = make(chan *Process)
 	manager.Queue = make([]*Process, 0)
 	manager.Running = make([]*Process, 0)
-	manager.event = make(chan *Event)
 	manager.Config = config
 	return manager
 }
@@ -65,7 +62,6 @@ func (m *Manager) Start() {
 	log.Println("Starting process manager")
 	c := cron.New()
 
-	fmt.Println(m.Config.Process)
 	for _, t := range m.Config.Process {
 		if t.AutoStart {
 			log.Printf("Booting %s\n", t.Name)

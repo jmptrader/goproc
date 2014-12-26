@@ -39,18 +39,18 @@ func concatStrings(strs ...string) string {
 	return buffer.String()
 }
 
-func (t *ProcessTemplate) NewProcessWithEvent(evt *Event) *Process {
+func (t *ProcessTemplate) NewProcessWithTrigger(trig *Trigger) *Process {
 	// Replace an arg that's :event with the json representation of the event data
 
 	args := make([]string, 0)
 
 	for _, arg := range t.Args {
 		if arg == ":json" {
-			marshaled, _ := json.Marshal(evt.Data)
+			marshaled, _ := json.Marshal(trig.Data)
 			args = append(args, string(marshaled))
 		} else if arg == ":flags" {
 			// Only pass through flags if they're strings
-			for k, v := range *evt.Data {
+			for k, v := range *trig.Data {
 				marshaled, _ := json.Marshal(v)
 				args = append(args, concatStrings("--", k, " ", string(marshaled)))
 			}
