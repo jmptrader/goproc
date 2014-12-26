@@ -18,6 +18,7 @@ type ProcessTemplate struct {
 	Name         string
 	RespawnLimit int
 	AutoStart    bool
+	RunCount     int
 }
 
 func (t *ProcessTemplate) NewProcess() *Process {

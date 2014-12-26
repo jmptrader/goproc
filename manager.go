@@ -2,7 +2,7 @@ package goproc
 
 import (
 	// "encoding/json"
-	// "fmt"
+	"fmt"
 	"github.com/robfig/cron"
 	"log"
 	"time"
@@ -65,6 +65,7 @@ func (m *Manager) Start() {
 	log.Println("Starting process manager")
 	c := cron.New()
 
+	fmt.Println(m.Config.Process)
 	for _, t := range m.Config.Process {
 		if t.AutoStart {
 			log.Printf("Booting %s\n", t.Name)

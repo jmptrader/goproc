@@ -98,6 +98,7 @@ func (p *Process) Watch() {
 }
 
 func (p *Process) Start() bool {
+	p.Template.RunCount++
 	p.StartTime = time.Now()
 	// wd, _ := os.Getwd()
 	proc := &os.ProcAttr{
