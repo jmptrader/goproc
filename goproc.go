@@ -7,9 +7,7 @@ import (
 )
 
 type Config struct {
-	Cron          []*ProcessTemplate
-	Event         []*ProcessTemplate
-	Boot          []*ProcessTemplate
+	Process       []*ProcessTemplate
 	MaxConcurrent int
 }
 

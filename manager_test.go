@@ -82,7 +82,7 @@ func (s *TestSuite) TestRegisterCrons(c *C) {
 	}
 
 	config := &Config{
-		Cron: []*ProcessTemplate{
+		Process: []*ProcessTemplate{
 			temp1,
 		},
 	}

@@ -11,11 +11,9 @@ func (s *TestSuite) TestParse(c *C) {
 
 	c.Assert(err, Equals, nil)
 
-	c.Assert(len(procs.Cron), Equals, 1)
-	c.Assert(len(procs.Boot), Equals, 1)
-	c.Assert(len(procs.Event), Equals, 1)
+	c.Assert(len(procs.Process), Equals, 3)
 
-	cron := procs.Cron[0]
+	cron := procs.Process[0]
 
 	c.Assert(cron.Command, Equals, "php")
 	c.Assert(cron.Name, Equals, "CronProcess")

@@ -13,11 +13,11 @@ type ProcessTemplate struct {
 	Cron         string
 	Cwd          string
 	ErrFile      string
-	Event        string
 	KeepAlive    bool
 	LogFile      string
 	Name         string
 	RespawnLimit int
+	AutoStart    bool
 }
 
 func (t *ProcessTemplate) NewProcess() *Process {

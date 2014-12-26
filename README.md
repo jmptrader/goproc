@@ -27,14 +27,8 @@ myProc := manager.Processes["MyProcName"]
 See "Process Template Configuration" section below for how to make a `ProcessTemplate`.
 ```go
 type Config struct {
-	// Processes to register to cron jobs
-	Cron          []*ProcessTemplate
-
-	// Processes to run on an event
-	Event         []*ProcessTemplate
-
-	// Processes to run as soon as `manager.Start()` is run
-	Boot          []*ProcessTemplate
+	// List of process templates
+	Process          []*ProcessTemplate
 
 	// Most concurrent processes to run at one time. 
 	// If this limit is reached, `manager.Spawn()` and `manager.TriggerEvent()` 
@@ -45,9 +39,11 @@ type Config struct {
 ```
 
 ### Trigger an Event
+Manually trigger a process specifying name and data:
+
 ```go
-manager.TriggerEvent(&goproc.Event{
-	Name:"My Event",
+manager.TriggerProcess(&goproc.Event{
+	Name:"My Process",
 	Data:&map[string]interface{
 		"foo":"bar",
 	},
@@ -55,7 +51,7 @@ manager.TriggerEvent(&goproc.Event{
 ```
 
 ### Special Event Arguments
-You can pass event data to your process as one argument in JSON format, or as a list of key-value pairs using flags. For example, `Args:[]string{"firstArg, ":json", ":flags"}`, with the above event, would call the process with the following arguments:
+You can pass event data to your process as one argument in JSON format, or as a list of key-value pairs using flags. For example, `Args:[]string{"firstArg, ":json", ":flags"}`, with the above event, would call the process named "My Process" with the following arguments:
 
 ```go
 ["firstArg", "{\"foo\":\"bar\"}", "--foo \"bar\""]
@@ -66,10 +62,14 @@ Note that the `:flags` indicator uses the map key as the flag name, and `json.Ma
 
 # Process Template Configuration
 Processes are run using instances of `ProcessTemplate`. 
+
 ```go
 type ProcessTemplate struct {
 	// Array of arguments to pass to the command.
 	Args         []string
+
+	// Whether to start this process as soon as the process manager starts
+	AuthStart    bool
 
 	// Executable to run (e.g. "/usr/bin/php")
 	Command      string
@@ -83,10 +83,7 @@ type ProcessTemplate struct {
 	// File for process stderr
 	ErrFile      string
 
-	// Name of event to respond to
-	Event        string
-
-	// Restart this process if it dies
+	// Automatically restart this process if it dies
 	KeepAlive    bool
 
 	// File for process stdout
@@ -95,7 +92,7 @@ type ProcessTemplate struct {
 	// Process name (for external referencing)
 	Name         string
 
-	// Max number of respawns before stopping
+	// Max number of respawns (from KeepAlive) before stopping
 	RespawnLimit int
 }
 ```

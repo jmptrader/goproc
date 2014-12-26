@@ -1,21 +1,21 @@
 maxConcurrent = 5
 
 # Processes
-[[cron]]
+[[process]]
 name = "CronProcess"
 cron = "*"
 cwd = "/path/to/process"
 command = "php"
 args = ["process.php"]
 
-[[boot]]
+[[process]]
 name = "HTTP Server"
 cwd = "/path/to/process"
 command = "node"
 args = ["server.js"]
 keepAlive = true
 
-[[event]]
+[[process]]
 name = "HTTP Server"
 cwd = "/path/to/process"
 command = "node"

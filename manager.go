@@ -28,10 +28,10 @@ func (m *Manager) Spawn(t *ProcessTemplate) {
 	m.spawn(p)
 }
 
-func (m *Manager) TriggerEvent(event *Event) {
+func (m *Manager) TriggerProcess(event *Event) {
 	// Loop through all event processes to see which ones respond
-	for _, t := range m.Config.Event {
-		if t.Event == event.Name {
+	for _, t := range m.Config.Process {
+		if t.Name == event.Name {
 			p := t.NewProcessWithEvent(event)
 			m.spawn(p)
 		}
@@ -63,18 +63,22 @@ func NewManager(config *Config) *Manager {
 
 func (m *Manager) Start() {
 	log.Println("Starting process manager")
-	// Boot all processes that are set to boot
-	for _, t := range m.Config.Boot {
-		m.Spawn(t)
+	c := cron.New()
+
+	for _, t := range m.Config.Process {
+		if t.AutoStart {
+			log.Printf("Booting %s\n", t.Name)
+			m.Spawn(t)
+		}
+
+		if len(t.Cron) > 0 {
+			log.Printf("Adding %s to crontab\n", t.Name)
+			c.AddFunc(t.Cron, func() {
+				m.Spawn(t)
+			})
+		}
 	}
 
-	// Register crons
-	c := cron.New()
-	for _, t := range m.Config.Cron {
-		c.AddFunc(t.Cron, func() {
-			m.Spawn(t)
-		})
-	}
 	m.cron = c
 	m.StartCrons()
 
