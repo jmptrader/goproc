@@ -41,9 +41,10 @@ func (m *Manager) spawn(p *Process) {
 	// // Are we at the limit?
 	if m.Config.MaxConcurrent > 0 && len(m.Running) >= m.Config.MaxConcurrent {
 		p.QueuedAt = time.Now()
-		log.Println("Queuing process ", p.Template.Name, p.QueuedAt)
+		log.Println("Queuing process ", p.Template.Name)
 		m.Queue = append(m.Queue, p)
 	} else {
+		log.Println("Booting process ", p.Template.Name)
 		m.Running = append(m.Running, p)
 		p.Spawn()
 	}
