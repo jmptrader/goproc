@@ -4,6 +4,8 @@ import (
 	// "labix.org/v2/mgo/bson"
 	"bytes"
 	"encoding/json"
+	"github.com/robfig/cron"
+	"github.com/twinj/uuid"
 	// "fmt"
 )
 
@@ -12,13 +14,14 @@ type ProcessTemplate struct {
 	Command      string
 	Cron         string
 	Cwd          string
-	ErrFile      string
 	KeepAlive    bool
 	LogFile      string
 	Name         string
 	RespawnLimit int
 	AutoStart    bool
 	RunCount     int
+	ResetLog     bool
+	manager      *Manager
 }
 
 func (t *ProcessTemplate) NewProcess() *Process {
@@ -27,7 +30,16 @@ func (t *ProcessTemplate) NewProcess() *Process {
 		Args:     t.Args,
 	}
 
+	id := uuid.NewV1()
+	proc.Uuid = id.String()
+
 	return proc
+}
+
+func (t *ProcessTemplate) RegisterCron(c *cron.Cron) {
+	c.AddFunc(t.Cron, func() {
+		t.manager.Spawn(t)
+	})
 }
 
 func concatStrings(strs ...string) string {
@@ -50,9 +62,15 @@ func (t *ProcessTemplate) NewProcessWithTrigger(trig *Trigger) *Process {
 			args = append(args, string(marshaled))
 		} else if arg == ":flags" {
 			// Only pass through flags if they're strings
-			for k, v := range *trig.Data {
-				marshaled, _ := json.Marshal(v)
-				args = append(args, concatStrings("--", k, " ", string(marshaled)))
+			for k, v := range trig.Data {
+				if str, ok := v.(string); ok {
+					args = append(args, "--"+k+" "+str)
+				} else {
+					marshaled, _ := json.Marshal(v)
+
+					args = append(args, "--"+k+" "+string(marshaled))
+				}
+
 			}
 		} else {
 			args = append(args, arg)
@@ -60,6 +78,7 @@ func (t *ProcessTemplate) NewProcessWithTrigger(trig *Trigger) *Process {
 	}
 
 	proc := t.NewProcess()
+
 	proc.Args = args
 	return proc
 }

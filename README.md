@@ -80,13 +80,10 @@ type ProcessTemplate struct {
 	// Working directory (defaults to current)
 	Cwd          string
 
-	// File for process stderr
-	ErrFile      string
-
 	// Automatically restart this process if it dies
 	KeepAlive    bool
 
-	// File for process stdout
+	// File for process logs
 	LogFile      string
 
 	// Process name (for external referencing)

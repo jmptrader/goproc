@@ -12,7 +12,6 @@ func (s *TestSuite) TestRespawn(c *C) {
 		Command:      "/usr/local/bin/node",
 		Args:         []string{"samples/longrunning.js"},
 		LogFile:      "/tmp/cronlog",
-		ErrFile:      "/tmp/cronlog",
 		KeepAlive:    true,
 		RespawnLimit: 5,
 		Name:         "Test",

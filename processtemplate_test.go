@@ -11,14 +11,13 @@ func (s *TestSuite) TestNewProcessWithEventJson(c *C) {
 		Command:      "/usr/local/bin/node",
 		Args:         []string{"samples/longrunning.js", ":json"},
 		LogFile:      "/tmp/cronlog",
-		ErrFile:      "/tmp/cronlog",
 		KeepAlive:    true,
 		RespawnLimit: 5,
 	}
 
 	trig := &Trigger{
 		Name: "Foo",
-		Data: &map[string]interface{}{
+		Data: map[string]interface{}{
 			"foo":  "bar",
 			"baz":  1,
 			"bing": true,
@@ -36,27 +35,25 @@ func (s *TestSuite) TestNewProcessWithEventFlags(c *C) {
 		Command:      "/usr/local/bin/node",
 		Args:         []string{"samples/longrunning.js", ":flags"},
 		LogFile:      "/tmp/cronlog",
-		ErrFile:      "/tmp/cronlog",
 		KeepAlive:    true,
 		RespawnLimit: 5,
 	}
 
 	trig := &Trigger{
 		Name: "Foo",
-		Data: &map[string]interface{}{
+		Data: map[string]interface{}{
 			"foo": "bar",
 			"baz": "bing",
 		},
 	}
 
 	proc := template.NewProcessWithTrigger(trig)
-
 	// This switches sometimes, so we allow for both orders
-	if proc.Args[1] == "--foo \"bar\"" {
-		c.Assert(proc.Args[2], Equals, "--baz \"bing\"")
+	if proc.Args[1] == "--foo bar" {
+		c.Assert(proc.Args[2], Equals, "--baz bing")
 	} else {
-		c.Assert(proc.Args[1], Equals, "--baz \"bing\"")
-		c.Assert(proc.Args[2], Equals, "--foo \"bar\"")
+		c.Assert(proc.Args[1], Equals, "--baz bing")
+		c.Assert(proc.Args[2], Equals, "--foo bar")
 
 	}
 

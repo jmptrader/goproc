@@ -2,7 +2,9 @@ package goproc
 
 import (
 	// "encoding/json"
+	"errors"
 	"github.com/robfig/cron"
+	"github.com/twinj/uuid"
 	"log"
 	"time"
 )
@@ -13,6 +15,23 @@ type Manager struct {
 	monitor chan *Process
 	Queue   []*Process
 	Running []*Process
+	Logger  Logger
+	Started bool
+}
+
+type Logger interface {
+	Info(msg string)
+	Error(msg string)
+}
+
+type BasicLogger struct{}
+
+func (b *BasicLogger) Info(msg string) {
+	log.Println(msg)
+}
+
+func (b *BasicLogger) Error(msg string) {
+	log.Println(msg)
 }
 
 func (m *Manager) Status() {
@@ -23,28 +42,46 @@ func (m *Manager) Status() {
 func (m *Manager) Spawn(t *ProcessTemplate) {
 	// Create a new process from template
 	p := t.NewProcess()
-	m.spawn(p)
+	m.SpawnProcess(p)
 }
 
-func (m *Manager) Trigger(trig *Trigger) {
+func (m *Manager) Trigger(trig *Trigger) (*Process, error) {
 	// Loop through all event processes to see which ones respond
+	p, err := m.ProcessFromTrigger(trig)
+	if err == nil {
+		m.Logger.Info("Found process. Spawning")
+		m.SpawnProcess(p)
+	} else {
+		m.Logger.Error("No matching process found: " + trig.Name)
+	}
+	return p, err
+}
+
+func (m *Manager) ProcessFromTrigger(trig *Trigger) (*Process, error) {
 	for _, t := range m.Config.Process {
 		if t.Name == trig.Name {
 			p := t.NewProcessWithTrigger(trig)
-			m.spawn(p)
+			return p, nil
 		}
 	}
+	return &Process{}, errors.New("No process responds to this trigger")
 }
 
-func (m *Manager) spawn(p *Process) {
+func (m *Manager) SpawnProcess(p *Process) {
 	p.monitor = m.monitor
+
 	// // Are we at the limit?
 	if m.Config.MaxConcurrent > 0 && len(m.Running) >= m.Config.MaxConcurrent {
 		p.QueuedAt = time.Now()
-		log.Println("Queuing process ", p.Template.Name)
+		m.Logger.Info("Queuing process " + p.Template.Name)
+		p.Status = "queued"
 		m.Queue = append(m.Queue, p)
+
+		for _, hook := range m.Config.ProcessHooks {
+			hook("queued", p)
+		}
 	} else {
-		log.Println("Booting process ", p.Template.Name)
+		m.Logger.Info("Booting process " + p.Template.Name)
 		m.Running = append(m.Running, p)
 		p.Spawn()
 	}
@@ -56,34 +93,43 @@ func NewManager(config *Config) *Manager {
 	manager.Queue = make([]*Process, 0)
 	manager.Running = make([]*Process, 0)
 	manager.Config = config
+	manager.Logger = &BasicLogger{}
 	return manager
 }
 
 func (m *Manager) Start() {
-	log.Println("Starting process manager")
+	uuid.SwitchFormat(uuid.CleanHyphen)
+	defer func() {
+		if r := recover(); r != nil {
+			log.Println(r)
+		}
+	}()
+	m.Logger.Info("Starting process manager")
+
 	c := cron.New()
 
 	for _, t := range m.Config.Process {
+		t.manager = m
 		if t.AutoStart {
-			log.Printf("Booting %s\n", t.Name)
+			m.Logger.Info("Booting " + t.Name)
 			m.Spawn(t)
 		}
 
 		if len(t.Cron) > 0 {
-			log.Printf("Adding %s to crontab\n", t.Name)
-			c.AddFunc(t.Cron, func() {
-				m.Spawn(t)
-			})
+			m.Logger.Info("Adding " + t.Name + " to crontab")
+			t.RegisterCron(c)
 		}
 	}
 
 	m.cron = c
-	m.StartCrons()
+	m.Logger.Info("Created cron...")
+	// m.StartCrons()
+	m.Started = true
 
+	m.Logger.Info("Set started to true")
 	for {
 		select {
 		case proc := <-m.monitor:
-			log.Println("Got proc from monitor channel", proc.Template.Name)
 			// Remove proc from running
 			for i, p := range m.Running {
 				if proc == p {
@@ -98,7 +144,7 @@ func (m *Manager) Start() {
 						} else {
 							m.Queue = append([]*Process{}, m.Queue[1:]...)
 						}
-						m.spawn(next)
+						m.SpawnProcess(next)
 					}
 				}
 			}
