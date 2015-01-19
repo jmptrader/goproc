@@ -106,7 +106,7 @@ func (p *Process) Watch() {
 		if p.Template.KeepAlive {
 
 			if p.hasManager() {
-				p.Template.manager.Logger.Info("Process " + p.Template.Name + " died unexpectedly - restarting")
+				p.Template.manager.Logger.Info("Restarting " + p.Template.Name)
 			}
 			if p.Template.RespawnLimit > 0 && p.Respawns == p.Template.RespawnLimit {
 				p.Stop()
@@ -191,12 +191,14 @@ func (p *Process) Start() bool {
 }
 
 func (p *Process) Restart() {
+	// p.Status = "restarting"
 	// Hooks?
-	if p.Status != "restarted" {
-		p._stop()
-	}
 
 	p.release("restarting")
+
+	if p.Status != "restarting" {
+		p._stop()
+	}
 	p.Spawn()
 }
 
@@ -236,8 +238,10 @@ func (p *Process) Spawn() {
 		p.Start()
 		if p.Pid > 0 {
 			p.Status = "running"
-			for _, hook := range p.Template.manager.Config.ProcessHooks {
-				hook("running", p)
+			if p.hasManager() {
+				for _, hook := range p.Template.manager.Config.ProcessHooks {
+					hook("running", p)
+				}
 			}
 		}
 

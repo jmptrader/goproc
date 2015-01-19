@@ -94,6 +94,8 @@ func NewManager(config *Config) *Manager {
 	manager.Running = make([]*Process, 0)
 	manager.Config = config
 	manager.Logger = &BasicLogger{}
+
+	// log.Println(config.ProcessHooks)
 	return manager
 }
 

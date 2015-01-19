@@ -77,6 +77,8 @@ func (s *TestSuite) TestRegisterCrons(c *C) {
 		},
 		Cron: "* * * * * *",
 		Name: "asdf",
+		// LogFile:  "/tmp/crontest",
+		ResetLog: true,
 	}
 
 	config := &Config{
@@ -89,6 +91,14 @@ func (s *TestSuite) TestRegisterCrons(c *C) {
 
 	// log.Println(manager.monitor)
 	go manager.Start()
+
+	for {
+		if manager.Started {
+			manager.StartCrons()
+			break
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
 
 	// Make the crons are registered
 
